@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {createStackNavigator} from '@react-navigation/stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {ActivityIndicator, View} from 'react-native';
+import {loginUser, registerUser} from '../Api/login/auth';
 
 import LoginScreen from './modules/screens/LoginScreen';
 import HomeScreen from './modules/screens/HomeScreen';
@@ -53,22 +54,6 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({
   const [userToken, setUserToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Auth service imports
-  const loginUser = async (email: string, password: string) => {
-    // Replace with your actual API call
-    return 'sample_token_' + email; // Simulate a token for testing
-  };
-
-  const registerUser = async (
-    email: string,
-    password: string,
-    name: string,
-    phone: string,
-  ) => {
-    // Replace with your actual API call
-    return 'sample_token_' + email; // Simulate a token for testing
-  };
-
   // Load token from storage on app start
   useEffect(() => {
     const loadToken = async () => {
@@ -89,7 +74,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const token = await loginUser(email, password);
+      const token = await loginUser(email, password); // calls actual API
       await AsyncStorage.setItem('userToken', token);
       setUserToken(token);
     } catch (error) {
@@ -109,7 +94,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({
   ) => {
     setLoading(true);
     try {
-      const token = await registerUser(email, password, name, phone);
+      const token = await registerUser(email, password, name, phone); // calls actual API
       await AsyncStorage.setItem('userToken', token);
       setUserToken(token);
     } catch (error) {

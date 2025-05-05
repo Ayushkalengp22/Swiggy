@@ -11,8 +11,8 @@ import {useAuth} from '../../App'; // Update path as needed
 
 export default function LoginScreen() {
   const {login, register, loading} = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('dummy@gmail.com');
+  const [password, setPassword] = useState('12345678');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [isLogin, setIsLogin] = useState(true);
