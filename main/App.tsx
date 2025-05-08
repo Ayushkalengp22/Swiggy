@@ -3,11 +3,12 @@ import {NavigationContainer} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {createStackNavigator} from '@react-navigation/stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {ActivityIndicator, View} from 'react-native';
+import {ActivityIndicator, Alert, View} from 'react-native';
 import {loginUser, registerUser} from '../Api/login/auth';
 
 import LoginScreen from './modules/screens/LoginScreen';
 import HomeScreen from './modules/screens/HomeScreen';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 // Define auth context types
 type AuthContextType = {
@@ -42,7 +43,11 @@ const Tab = createBottomTabNavigator();
 function MainTabs() {
   return (
     <Tab.Navigator screenOptions={{tabBarStyle: {display: 'none'}}}>
-      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{headerShown: false}} // 👈 Hides the "Home" screen header
+      />
     </Tab.Navigator>
   );
 }
@@ -78,8 +83,8 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({
       await AsyncStorage.setItem('userToken', token);
       setUserToken(token);
     } catch (error) {
-      console.error('Login failed:', error);
-      throw error;
+      // Alert("wronge credential")
+      console.log(error);
     } finally {
       setLoading(false);
     }
