@@ -12,6 +12,21 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import {getAllRestro} from '../../../Api/login/user/getRestro';
+import {useNavigation} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
+
+// Define your navigation parameter types
+type RootStackParamList = {
+  Home: undefined;
+  FoodItemScreen: {
+    restaurantId: number;
+    restaurantName: string;
+  };
+  // Add other screens as needed
+};
+
+// Create a typed navigation hook
+type FoodAppNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
 // Sample food categories
 const foodCategories = [
@@ -42,24 +57,46 @@ const foodCategories = [
   },
 ];
 
+// Define better type for CategoryItem props
+interface CategoryItemProps {
+  name: string;
+  imageUrl: string;
+}
+
 // Food Category Item
-// const CategoryItem = ({name, imageUrl}: any) => {
-//   return (
-//     <TouchableOpacity style={styles.categoryItem}>
-//       <View style={styles.categoryIconContainer}>
-//         <Image
-//           source={{uri: imageUrl}}
-//           style={styles.categoryIcon}
-//           resizeMode="contain"
-//         />
-//       </View>
-//       <Text style={styles.categoryName}>{name}</Text>
-//     </TouchableOpacity>
-//   );
-// };
+const CategoryItem = ({name, imageUrl}: CategoryItemProps) => {
+  return (
+    <TouchableOpacity style={styles.categoryItem}>
+      <View style={styles.categoryIconContainer}>
+        <Image
+          source={{uri: imageUrl}}
+          style={styles.categoryIcon}
+          resizeMode="contain"
+        />
+      </View>
+      <Text style={styles.categoryName}>{name}</Text>
+    </TouchableOpacity>
+  );
+};
+
+// Define type for RestaurantCard props
+interface RestaurantCardProps {
+  id: number;
+  name: string;
+  cuisine: string;
+  rating: number;
+  deliveryTime: string;
+  price?: string;
+  discount?: string;
+  imageUrl: string;
+  location: string;
+  isActive: boolean;
+  onPress: () => void;
+}
 
 // Restaurant Card
 const RestaurantCard = ({
+  id,
   name,
   cuisine,
   rating,
@@ -68,9 +105,10 @@ const RestaurantCard = ({
   discount,
   imageUrl,
   location,
-}: any) => {
+  onPress,
+}: RestaurantCardProps) => {
   return (
-    <TouchableOpacity style={styles.restaurantCard}>
+    <TouchableOpacity style={styles.restaurantCard} onPress={onPress}>
       <Image
         source={{uri: imageUrl}}
         style={styles.restaurantImage}
@@ -155,22 +193,24 @@ const FoodBanner = () => {
   );
 };
 
+// Restaurant interface
+interface Restaurant {
+  id: number;
+  name: string;
+  location: string;
+  imageUrl: string;
+  rating: number;
+  deliveryTime: string;
+  cuisine: string;
+  isActive: boolean;
+  price?: string;
+  discount?: string;
+}
+
 // Main App
 const SimpleFoodDeliveryApp = () => {
-  // Define the restaurant type
-  interface Restaurant {
-    id: number;
-    name: string;
-    location: string;
-    imageUrl: string;
-    rating: number;
-    deliveryTime: string;
-    cuisine: string;
-    isActive: boolean;
-    price?: string;
-    discount?: string;
-  }
-
+  // Use the typed navigation hook
+  const navigation = useNavigation<FoodAppNavigationProp>();
   const [restros, setRestros] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -198,6 +238,17 @@ const SimpleFoodDeliveryApp = () => {
     fetchRestros();
   }, []);
 
+  // Navigation function
+  const navigateToFoodScreen = (
+    restaurantId: number,
+    restaurantName: string,
+  ) => {
+    navigation.navigate('FoodItemScreen', {
+      restaurantId,
+      restaurantName,
+    });
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <Header />
@@ -211,13 +262,13 @@ const SimpleFoodDeliveryApp = () => {
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.categoriesContainer}>
-            {/* {foodCategories.map(category => (
+            {foodCategories.map(category => (
               <CategoryItem
                 key={category.id}
                 name={category.name}
                 imageUrl={category.imageUrl}
               />
-            ))} */}
+            ))}
           </ScrollView>
         </View>
 
@@ -234,6 +285,7 @@ const SimpleFoodDeliveryApp = () => {
             restros.map(restaurant => (
               <RestaurantCard
                 key={restaurant.id}
+                id={restaurant.id}
                 name={restaurant.name}
                 cuisine={restaurant.cuisine}
                 rating={restaurant.rating}
@@ -241,6 +293,9 @@ const SimpleFoodDeliveryApp = () => {
                 location={restaurant.location}
                 imageUrl={restaurant.imageUrl}
                 isActive={restaurant.isActive}
+                onPress={() =>
+                  navigateToFoodScreen(restaurant.id, restaurant.name)
+                }
               />
             ))
           ) : (
@@ -252,7 +307,7 @@ const SimpleFoodDeliveryApp = () => {
       </ScrollView>
 
       {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
+      {/* <View style={styles.bottomNav}>
         {['Home', 'Search', 'Orders', 'Account'].map((item, index) => (
           <TouchableOpacity key={index} style={styles.navItem}>
             <Text
@@ -261,7 +316,7 @@ const SimpleFoodDeliveryApp = () => {
             </Text>
           </TouchableOpacity>
         ))}
-      </View>
+      </View> */}
     </SafeAreaView>
   );
 };

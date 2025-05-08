@@ -8,7 +8,8 @@ import {
   SafeAreaView,
   TouchableOpacity,
 } from 'react-native';
-import {useAuth} from '../../App'; // Update path as needed
+// import {useAuth} from '../../App';
+import {useAuth} from '../../../src/navigation/AuthContext';
 import Icon from '../../../src/component/Icon';
 import {defaultSpace} from '../../../src/lib/deviceHelper';
 import {Colors} from '../../../src/constants/Colors';
