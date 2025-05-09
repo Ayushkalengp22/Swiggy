@@ -71,7 +71,6 @@ const TabNavigator = () => {
             iconName = focused ? 'account' : 'account-outline';
           }
 
-          // You can return any component here
           return <Icon name={'arrowLeft'} size={size} color={color} />;
         },
         tabBarActiveTintColor: '#FF6008',
@@ -97,7 +96,7 @@ const MainNavigator = () => {
       <MainStack.Screen
         name="FoodItemScreen"
         component={FoodItemScreen}
-        options={{title: 'Food Item'}}
+        options={{headerShown: false}}
       />
       <MainStack.Screen
         name="CartScreen"

@@ -21,6 +21,10 @@ type RootStackParamList = {
   FoodItemScreen: {
     restaurantId: number;
     restaurantName: string;
+    cuisine: string;
+    rating: number;
+    deliveryTime: string;
+    location: string;
   };
   // Add other screens as needed
 };
@@ -205,6 +209,7 @@ interface Restaurant {
   isActive: boolean;
   price?: string;
   discount?: string;
+  address: string;
 }
 
 // Main App
@@ -242,10 +247,18 @@ const SimpleFoodDeliveryApp = () => {
   const navigateToFoodScreen = (
     restaurantId: number,
     restaurantName: string,
+    cuisine: string,
+    rating: number,
+    deliveryTime: string,
+    location: string,
   ) => {
     navigation.navigate('FoodItemScreen', {
       restaurantId,
       restaurantName,
+      cuisine,
+      rating,
+      deliveryTime,
+      location,
     });
   };
 
@@ -294,7 +307,14 @@ const SimpleFoodDeliveryApp = () => {
                 imageUrl={restaurant.imageUrl}
                 isActive={restaurant.isActive}
                 onPress={() =>
-                  navigateToFoodScreen(restaurant.id, restaurant.name)
+                  navigateToFoodScreen(
+                    restaurant.id,
+                    restaurant.name,
+                    restaurant.cuisine,
+                    restaurant.rating,
+                    restaurant.deliveryTime,
+                    restaurant.address,
+                  )
                 }
               />
             ))
