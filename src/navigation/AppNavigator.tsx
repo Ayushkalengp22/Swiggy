@@ -6,7 +6,6 @@ import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {View, Text, ActivityIndicator} from 'react-native';
 import {useAuth} from './AuthContext';
 
-// Import your screens here
 import LoginScreen from '../../main/modules/screens/LoginScreen';
 // import RegisterScreen from './modules/screens/RegisterScreen';
 import SimpleFoodDeliveryApp from '../../main/modules/screens/HomeScreen';
@@ -15,20 +14,23 @@ import CartScreen from '../../main/modules/screens/CartScreen';
 import OrdersScreen from '../../main/modules/screens/OrdersScreen';
 import AccountScreen from '../../main/modules/screens/AccountScreen';
 import SearchScreen from '../../main/modules/screens/SearchScreen';
+import AddressScreen from '../../main/modules/screens/AddressScreen';
 
-// Import icons (replace with your actual icon component import)
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 // Define your navigation types
 export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
+  FoodItemScreen: undefined;
+  CartScreen: undefined;
 };
 
 export type MainStackParamList = {
   HomeTabs: undefined;
   FoodItemScreen: {restaurantId: number; restaurantName: string};
   CartScreen: undefined;
+  AddressScreen: {addressId: number; userId: number};
 };
 
 export type TabParamList = {
@@ -49,6 +51,8 @@ const AuthNavigator = () => {
     <AuthStack.Navigator screenOptions={{headerShown: false}}>
       <AuthStack.Screen name="Login" component={LoginScreen} />
       {/* <AuthStack.Screen name="Register" component={RegisterScreen} /> */}
+      <AuthStack.Screen name="FoodItemScreen" component={FoodItemScreen} />
+      <AuthStack.Screen name="CartScreen" component={CartScreen} />
     </AuthStack.Navigator>
   );
 };
@@ -101,6 +105,11 @@ const MainNavigator = () => {
       <MainStack.Screen
         name="CartScreen"
         component={CartScreen}
+        options={{headerShown: false}}
+      />
+      <MainStack.Screen
+        name="AddressScreen"
+        component={AddressScreen}
         options={{headerShown: false}}
       />
     </MainStack.Navigator>

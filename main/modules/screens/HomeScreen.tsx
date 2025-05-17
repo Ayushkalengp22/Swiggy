@@ -1,4 +1,3 @@
-// SimpleFoodDeliveryApp.js
 import React, {useEffect, useState} from 'react';
 import {
   View,
@@ -10,10 +9,13 @@ import {
   SafeAreaView,
   TextInput,
   ActivityIndicator,
+  StatusBar,
+  Platform,
 } from 'react-native';
 import {getAllRestro} from '../../../Api/login/user/getRestro';
 import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
+import {Colors} from '../../../src/constants/Colors';
 
 // Define your navigation parameter types
 type RootStackParamList = {
@@ -26,13 +28,11 @@ type RootStackParamList = {
     deliveryTime: string;
     location: string;
   };
-  // Add other screens as needed
+  AddressScreen: undefined;
 };
 
-// Create a typed navigation hook
 type FoodAppNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
-// Sample food categories
 const foodCategories = [
   {
     id: 1,
@@ -61,29 +61,24 @@ const foodCategories = [
   },
 ];
 
-// Define better type for CategoryItem props
 interface CategoryItemProps {
   name: string;
   imageUrl: string;
 }
 
-// Food Category Item
-const CategoryItem = ({name, imageUrl}: CategoryItemProps) => {
-  return (
-    <TouchableOpacity style={styles.categoryItem}>
-      <View style={styles.categoryIconContainer}>
-        <Image
-          source={{uri: imageUrl}}
-          style={styles.categoryIcon}
-          resizeMode="contain"
-        />
-      </View>
-      <Text style={styles.categoryName}>{name}</Text>
-    </TouchableOpacity>
-  );
-};
+const CategoryItem = ({name, imageUrl}: CategoryItemProps) => (
+  <TouchableOpacity style={styles.categoryItem}>
+    <View style={styles.categoryIconContainer}>
+      <Image
+        source={{uri: imageUrl}}
+        style={styles.categoryIcon}
+        resizeMode="contain"
+      />
+    </View>
+    <Text style={styles.categoryName}>{name}</Text>
+  </TouchableOpacity>
+);
 
-// Define type for RestaurantCard props
 interface RestaurantCardProps {
   id: number;
   name: string;
@@ -98,9 +93,7 @@ interface RestaurantCardProps {
   onPress: () => void;
 }
 
-// Restaurant Card
 const RestaurantCard = ({
-  id,
   name,
   cuisine,
   rating,
@@ -110,56 +103,49 @@ const RestaurantCard = ({
   imageUrl,
   location,
   onPress,
-}: RestaurantCardProps) => {
-  return (
-    <TouchableOpacity style={styles.restaurantCard} onPress={onPress}>
-      <Image
-        source={{uri: imageUrl}}
-        style={styles.restaurantImage}
-        // Use a placeholder fallback if the image fails to load
-        onError={e => {
-          console.log('Image failed to load:', imageUrl);
-        }}
-      />
-      {discount && (
-        <View style={styles.discountBadge}>
-          <Text style={styles.discountText}>{discount}</Text>
-        </View>
-      )}
-      <View style={styles.restaurantInfo}>
-        <Text style={styles.restaurantName}>{name}</Text>
-        <Text style={styles.restaurantCuisine}>{cuisine}</Text>
-        <Text style={styles.restaurantLocation}>{location}</Text>
-        <View style={styles.restaurantMeta}>
-          <View style={styles.ratingContainer}>
-            <Text style={styles.rating}>★ {rating}</Text>
-          </View>
-          <Text style={styles.metaSeparator}>•</Text>
-          <Text style={styles.deliveryTime}>{deliveryTime}</Text>
-          {price && (
-            <>
-              <Text style={styles.metaSeparator}>•</Text>
-              <Text style={styles.price}>{price}</Text>
-            </>
-          )}
-        </View>
+}: RestaurantCardProps) => (
+  <TouchableOpacity style={styles.restaurantCard} onPress={onPress}>
+    <Image source={{uri: imageUrl}} style={styles.restaurantImage} />
+    {discount && (
+      <View style={styles.discountBadge}>
+        <Text style={styles.discountText}>{discount}</Text>
       </View>
-    </TouchableOpacity>
-  );
-};
+    )}
+    <View style={styles.restaurantInfo}>
+      <Text style={styles.restaurantName}>{name}</Text>
+      <Text style={styles.restaurantCuisine}>{cuisine}</Text>
+      <Text style={styles.restaurantLocation}>{location}</Text>
+      <View style={styles.restaurantMeta}>
+        <View style={styles.ratingContainer}>
+          <Text style={styles.rating}>★ {rating}</Text>
+        </View>
+        <Text style={styles.metaSeparator}>•</Text>
+        <Text style={styles.deliveryTime}>{deliveryTime}</Text>
+        {price && (
+          <>
+            <Text style={styles.metaSeparator}>•</Text>
+            <Text style={styles.price}>{price}</Text>
+          </>
+        )}
+      </View>
+    </View>
+  </TouchableOpacity>
+);
 
-// Header with Search
+// ✅ Header with onPress for address
 const Header = () => {
+  const navigation = useNavigation<FoodAppNavigationProp>();
+
   return (
     <View style={styles.header}>
       <View style={styles.locationContainer}>
         <Text style={styles.locationLabel}>DELIVERY TO</Text>
-        <View style={styles.locationValue}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('AddressScreen')}
+          style={styles.locationValue}>
           <Text style={styles.locationText}>Home - 221B, Baker Street</Text>
-          <TouchableOpacity>
-            <Text style={styles.locationArrow}>▼</Text>
-          </TouchableOpacity>
-        </View>
+          <Text style={styles.locationArrow}>▼</Text>
+        </TouchableOpacity>
       </View>
       <View style={styles.searchContainer}>
         <TextInput
@@ -175,29 +161,25 @@ const Header = () => {
   );
 };
 
-// Main Food Banner
-const FoodBanner = () => {
-  return (
-    <TouchableOpacity style={styles.foodBanner}>
-      <View style={styles.bannerContent}>
-        <View style={styles.bannerTextContainer}>
-          <Text style={styles.bannerTitle}>FOOD DELIVERY</Text>
-          <Text style={styles.bannerSubtitle}>DELICIOUS FOOD YOU ❤️</Text>
-          <Text style={styles.bannerOffer}>UP TO 60% OFF & FREE DELIVERY</Text>
-        </View>
-        <Image
-          source={{
-            uri: 'https://cdn-icons-png.flaticon.com/512/4039/4039232.png',
-          }}
-          style={styles.bannerImage}
-          resizeMode="contain"
-        />
+const FoodBanner = () => (
+  <TouchableOpacity style={styles.foodBanner}>
+    <View style={styles.bannerContent}>
+      <View style={styles.bannerTextContainer}>
+        <Text style={styles.bannerTitle}>FOOD DELIVERY</Text>
+        <Text style={styles.bannerSubtitle}>DELICIOUS FOOD YOU ❤️</Text>
+        <Text style={styles.bannerOffer}>UP TO 60% OFF & FREE DELIVERY</Text>
       </View>
-    </TouchableOpacity>
-  );
-};
+      <Image
+        source={{
+          uri: 'https://cdn-icons-png.flaticon.com/512/4039/4039232.png',
+        }}
+        style={styles.bannerImage}
+        resizeMode="contain"
+      />
+    </View>
+  </TouchableOpacity>
+);
 
-// Restaurant interface
 interface Restaurant {
   id: number;
   name: string;
@@ -212,9 +194,7 @@ interface Restaurant {
   address: string;
 }
 
-// Main App
 const SimpleFoodDeliveryApp = () => {
-  // Use the typed navigation hook
   const navigation = useNavigation<FoodAppNavigationProp>();
   const [restros, setRestros] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -223,27 +203,20 @@ const SimpleFoodDeliveryApp = () => {
     async function fetchRestros() {
       try {
         const response = await getAllRestro();
-        console.log('Fetched restaurants:', JSON.stringify(response, null, 2));
-
-        // Check if response.data exists and is an array
-        if (response && response.data && Array.isArray(response.data)) {
+        if (response?.data && Array.isArray(response.data)) {
           setRestros(response.data);
         } else {
-          console.error('Invalid response format:', response);
           setRestros([]);
         }
       } catch (error) {
-        console.error('Error fetching restaurants:', error);
         setRestros([]);
       } finally {
         setLoading(false);
       }
     }
-
     fetchRestros();
   }, []);
 
-  // Navigation function
   const navigateToFoodScreen = (
     restaurantId: number,
     restaurantName: string,
@@ -263,86 +236,81 @@ const SimpleFoodDeliveryApp = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Header />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <FoodBanner />
+    <>
+      {/* Set status bar to orange color with white text */}
+      {/* <StatusBar
+        backgroundColor={Colors.orange}
+        barStyle="light-content"
+        translucent={false}
+      /> */}
 
-        {/* Categories Section */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Food Categories</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoriesContainer}>
-            {foodCategories.map(category => (
-              <CategoryItem
-                key={category.id}
-                name={category.name}
-                imageUrl={category.imageUrl}
-              />
-            ))}
-          </ScrollView>
-        </View>
+      {/* Use SafeAreaView with orange background for top area */}
+      <SafeAreaView style={styles.safeAreaTop} />
 
-        {/* Popular Restaurants Section */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Popular Restaurants</Text>
+      {/* Main content with white background */}
+      <SafeAreaView style={styles.container}>
+        <Header />
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <FoodBanner />
 
-          {loading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#FF6008" />
-              <Text style={styles.loadingText}>Loading restaurants...</Text>
-            </View>
-          ) : restros && restros.length > 0 ? (
-            restros.map(restaurant => (
-              <RestaurantCard
-                key={restaurant.id}
-                id={restaurant.id}
-                name={restaurant.name}
-                cuisine={restaurant.cuisine}
-                rating={restaurant.rating}
-                deliveryTime={restaurant.deliveryTime}
-                location={restaurant.location}
-                imageUrl={restaurant.imageUrl}
-                isActive={restaurant.isActive}
-                onPress={() =>
-                  navigateToFoodScreen(
-                    restaurant.id,
-                    restaurant.name,
-                    restaurant.cuisine,
-                    restaurant.rating,
-                    restaurant.deliveryTime,
-                    restaurant.address,
-                  )
-                }
-              />
-            ))
-          ) : (
-            <Text style={styles.noRestaurantsText}>
-              No restaurants available at the moment.
-            </Text>
-          )}
-        </View>
-      </ScrollView>
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Food Categories</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.categoriesContainer}>
+              {foodCategories.map(category => (
+                <CategoryItem
+                  key={category.id}
+                  name={category.name}
+                  imageUrl={category.imageUrl}
+                />
+              ))}
+            </ScrollView>
+          </View>
 
-      {/* Bottom Navigation */}
-      {/* <View style={styles.bottomNav}>
-        {['Home', 'Search', 'Orders', 'Account'].map((item, index) => (
-          <TouchableOpacity key={index} style={styles.navItem}>
-            <Text
-              style={item === 'Home' ? styles.activeNavText : styles.navText}>
-              {item}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View> */}
-    </SafeAreaView>
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Popular Restaurants</Text>
+            {loading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#FF6008" />
+                <Text style={styles.loadingText}>Loading restaurants...</Text>
+              </View>
+            ) : restros.length > 0 ? (
+              restros.map(restaurant => (
+                <RestaurantCard
+                  key={restaurant.id}
+                  {...restaurant}
+                  onPress={() =>
+                    navigateToFoodScreen(
+                      restaurant.id,
+                      restaurant.name,
+                      restaurant.cuisine,
+                      restaurant.rating,
+                      restaurant.deliveryTime,
+                      restaurant.address,
+                    )
+                  }
+                />
+              ))
+            ) : (
+              <Text style={styles.noRestaurantsText}>
+                No restaurants available at the moment.
+              </Text>
+            )}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </>
   );
 };
 
 // Styles
 const styles = StyleSheet.create({
+  safeAreaTop: {
+    flex: 0,
+    backgroundColor: Colors.orange,
+  },
   container: {
     flex: 1,
     backgroundColor: '#f8f8f8',
@@ -351,17 +319,19 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   header: {
-    backgroundColor: '#fff',
+    backgroundColor: Colors.orange,
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
+    borderBottomEndRadius: 30,
+    borderBottomLeftRadius: 30,
   },
   locationContainer: {
     marginBottom: 12,
   },
   locationLabel: {
     fontSize: 12,
-    color: '#888',
+    color: '#fff', // Changed to white for better contrast on orange
     marginBottom: 4,
   },
   locationValue: {
@@ -371,12 +341,12 @@ const styles = StyleSheet.create({
   locationText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff', // Changed to white for better contrast on orange
   },
   locationArrow: {
     marginLeft: 8,
     fontSize: 12,
-    color: '#FF6008',
+    color: '#fff', // Changed to white for consistency
   },
   searchContainer: {
     flexDirection: 'row',
