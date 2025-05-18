@@ -44,6 +44,14 @@ type RootStackParamList = {
     deliveryTime: number;
     location: string;
   };
+  CartScreen: {
+    cartItems: {
+      id: string;
+      name: string;
+      price: number;
+      quantity: number;
+    }[];
+  };
 };
 
 type FoodItemScreenRouteProp = RouteProp<RootStackParamList, 'FoodItemScreen'>;
@@ -169,7 +177,7 @@ const RestaurantScreen = () => {
       cartItem => cartItem.id === item.id,
     );
 
-    if (existingItemIndex === -1) return; // Item not in cart
+    if (existingItemIndex === -1) return;
 
     // Update foodItems state
     const updatedFoodItems = foodItems.map(foodItem => {
@@ -199,8 +207,7 @@ const RestaurantScreen = () => {
 
   // Handle view cart button press
   const handleViewCart = () => {
-    // Navigate to cart screen or show cart modal
-    console.log('View cart pressed - total amount:', totalAmount);
+    navigation.navigate('CartScreen');
   };
 
   // Handle menu button press
@@ -209,9 +216,8 @@ const RestaurantScreen = () => {
     // Implementation for showing menu categories
   };
 
-  // Calculate bottom padding for the list to account for the cart summary when visible
   const getBottomPadding = () => {
-    return totalItems > 0 ? 80 : 0; // Height of cart summary + some extra padding
+    return totalItems > 0 ? 80 : 0;
   };
 
   // Render the main content based on loading/error state

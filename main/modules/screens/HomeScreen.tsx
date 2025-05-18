@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   StatusBar,
   Platform,
+  Animated,
 } from 'react-native';
 import {getAllRestro} from '../../../Api/login/user/getRestro';
 import {useNavigation} from '@react-navigation/native';
@@ -132,13 +133,48 @@ const RestaurantCard = ({
   </TouchableOpacity>
 );
 
-// ✅ Header with onPress for address
-const Header = () => {
+// Modified Header with direction-based animation
+const Header = ({headerVisible}: any) => {
   const navigation = useNavigation<FoodAppNavigationProp>();
 
+  // Calculate the animation values based on header visibility
+  const addressOpacity = headerVisible;
+
+  const addressHeight = headerVisible.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 40],
+    extrapolate: 'clamp',
+  });
+
+  const headerPadding = headerVisible.interpolate({
+    inputRange: [0, 1],
+    outputRange: [8, 16],
+    extrapolate: 'clamp',
+  });
+
   return (
-    <View style={styles.header}>
-      <View style={styles.locationContainer}>
+    <Animated.View
+      style={[
+        styles.header,
+        {
+          paddingVertical: headerPadding,
+          paddingHorizontal: 16,
+        },
+      ]}>
+      <Animated.View
+        style={[
+          styles.locationContainer,
+          {
+            opacity: addressOpacity,
+            height: addressHeight,
+            overflow: 'hidden',
+            marginBottom: addressHeight.interpolate({
+              inputRange: [0, 40],
+              outputRange: [0, 12],
+              extrapolate: 'clamp',
+            }),
+          },
+        ]}>
         <Text style={styles.locationLabel}>DELIVERY TO</Text>
         <TouchableOpacity
           onPress={() => navigation.navigate('AddressScreen')}
@@ -146,7 +182,7 @@ const Header = () => {
           <Text style={styles.locationText}>Home - 221B, Baker Street</Text>
           <Text style={styles.locationArrow}>▼</Text>
         </TouchableOpacity>
-      </View>
+      </Animated.View>
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
@@ -157,7 +193,7 @@ const Header = () => {
           <Text>🔍</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </Animated.View>
   );
 };
 
@@ -199,6 +235,13 @@ const SimpleFoodDeliveryApp = () => {
   const [restros, setRestros] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Create animated values for scroll position and header visibility
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const headerVisible = useRef(new Animated.Value(1)).current;
+
+  // Store the last scroll position to determine direction
+  const lastScrollY = useRef(0);
+
   useEffect(() => {
     async function fetchRestros() {
       try {
@@ -237,20 +280,45 @@ const SimpleFoodDeliveryApp = () => {
 
   return (
     <>
-      {/* Set status bar to orange color with white text */}
-      {/* <StatusBar
-        backgroundColor={Colors.orange}
-        barStyle="light-content"
-        translucent={false}
-      /> */}
-
-      {/* Use SafeAreaView with orange background for top area */}
       <SafeAreaView style={styles.safeAreaTop} />
 
-      {/* Main content with white background */}
       <SafeAreaView style={styles.container}>
-        <Header />
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Pass the headerVisible value to Header for animation */}
+        <Header headerVisible={headerVisible} />
+
+        {/* Use Animated.ScrollView instead of regular ScrollView */}
+        <Animated.ScrollView
+          contentContainerStyle={styles.scrollContent}
+          onScroll={Animated.event(
+            [{nativeEvent: {contentOffset: {y: scrollY}}}],
+            {
+              useNativeDriver: false,
+              listener: event => {
+                const currentScrollY = event.nativeEvent.contentOffset.y;
+
+                // Determine scroll direction and toggle header visibility
+                if (currentScrollY > lastScrollY.current + 2) {
+                  // Scrolling down - hide header
+                  Animated.timing(headerVisible, {
+                    toValue: 0,
+                    duration: 150,
+                    useNativeDriver: false,
+                  }).start();
+                } else if (currentScrollY < lastScrollY.current - 2) {
+                  // Scrolling up - show header
+                  Animated.timing(headerVisible, {
+                    toValue: 1,
+                    duration: 150,
+                    useNativeDriver: false,
+                  }).start();
+                }
+
+                // Update the last scroll position
+                lastScrollY.current = currentScrollY;
+              },
+            },
+          )}
+          scrollEventThrottle={16}>
           <FoodBanner />
 
           <View style={styles.sectionContainer}>
@@ -299,7 +367,7 @@ const SimpleFoodDeliveryApp = () => {
               </Text>
             )}
           </View>
-        </ScrollView>
+        </Animated.ScrollView>
       </SafeAreaView>
     </>
   );
@@ -320,18 +388,19 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: Colors.orange,
-    padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
     borderBottomEndRadius: 30,
     borderBottomLeftRadius: 30,
+    zIndex: 999,
   },
   locationContainer: {
     marginBottom: 12,
+    justifyContent: 'center',
   },
   locationLabel: {
     fontSize: 12,
-    color: '#fff', // Changed to white for better contrast on orange
+    color: '#fff',
     marginBottom: 4,
   },
   locationValue: {
@@ -341,12 +410,12 @@ const styles = StyleSheet.create({
   locationText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#fff', // Changed to white for better contrast on orange
+    color: '#fff',
   },
   locationArrow: {
     marginLeft: 8,
     fontSize: 12,
-    color: '#fff', // Changed to white for consistency
+    color: '#fff',
   },
   searchContainer: {
     flexDirection: 'row',
