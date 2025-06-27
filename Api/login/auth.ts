@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000/auth';
+const API_BASE_URL = 'http://192.168.50.11:9000';
 
 export const registerUser = async (
   email: string,
@@ -33,6 +33,19 @@ export const loginUser = async (email: string, password: string) => {
     email,
     password,
   });
-  console.log(response.data);
+  // console.log(response.data);
   return response.data.token; // assuming API returns { token: '...' }
+};
+
+export const getUser = async (userId: number) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/getuser`, {
+      params: {userId},
+    });
+    console.log(response, 'userrrrrr');
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch user:', error);
+    throw error;
+  }
 };

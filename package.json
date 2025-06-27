@@ -19,6 +19,7 @@
     "@react-navigation/bottom-tabs": "^7.3.11",
     "@react-navigation/native": "^7.1.7",
     "@react-navigation/stack": "^7.3.0",
+    "@reduxjs/toolkit": "^2.8.2",
     "axios": "^1.9.0",
     "expo-linear-gradient": "^14.0.1",
     "lucide-react": "^0.507.0",
@@ -39,7 +40,9 @@
     "react-native-skeleton-placeholder": "^5.2.4",
     "react-native-vector-icons": "^10.2.0",
     "react-native-video": "^6.8.2",
-    "react-native-video-player": "^0.15.0-beta.3"
+    "react-native-video-player": "^0.15.0-beta.3",
+    "react-redux": "^9.2.0",
+    "redux-thunk": "^3.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

@@ -1,286 +1,138 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState} from 'react';
 import {
   SafeAreaView,
   StyleSheet,
   Text,
   View,
   TouchableOpacity,
-  TextInput,
   ScrollView,
   StatusBar,
-  Alert,
+  Animated,
+  ActivityIndicator,
 } from 'react-native';
-import {getUserAddresses} from '../../../Api/login/user/getUserAddress';
 import {Colors} from '../../../src/constants/Colors';
 
-const AddressScreen = () => {
-  const [addresses, setAddresses] = useState([]);
-  const [loading, setLoading] = useState(true);
+// Components
+import AddressCard from '../../../src/component/address/AddressCard';
+import AddAddressForm from '../../../src/component/address/AddAddressForm';
+
+// Hook
+import {useAddresses} from '../../../src/hooks/useAddresses';
+
+const AddressScreen: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newAddress, setNewAddress] = useState({
-    street: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    country: 'India',
-    type: '',
-    label: '',
-    primary: false,
-  });
+  const slideAnim = useState(new Animated.Value(0))[0];
 
-  const userId = 1;
-  useEffect(() => {
-    fetchAddresses();
-  }, []);
+  const {
+    addresses,
+    loading,
+    saving,
+    currentUserId,
+    selectedAddressId,
+    addAddress,
+    setPrimaryAddress,
+    deleteAddress,
+    selectAddress,
+  } = useAddresses();
 
-  const fetchAddresses = async () => {
-    setLoading(true);
-    try {
-      const response = await getUserAddresses(userId);
-      console.log('API Response:', response);
+  const toggleAddForm = () => {
+    setShowAddForm(!showAddForm);
+    Animated.timing(slideAnim, {
+      toValue: showAddForm ? 0 : 1,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+  };
 
-      if (response && response.data && Array.isArray(response.data)) {
-        setAddresses(response.data);
-        console.log('Setting addresses:', response.data);
-      } else {
-        console.error('Response format is not as expected:', response);
-      }
-    } catch (error) {
-      console.error('Error fetching addresses:', error);
-      Alert.alert('Error', 'Failed to load addresses. Please try again later.');
-    } finally {
-      setLoading(false);
+  const handleSaveAddress = async (addressData: any) => {
+    const success = await addAddress(addressData);
+    if (success) {
+      toggleAddForm();
     }
   };
 
-  useEffect(() => {
-    console.log('Updated addresses state:', addresses);
-  }, [addresses]);
-
-  const handleAddressTypeSelect = (type: any) => {
-    setNewAddress({...newAddress, type, label: type});
-  };
-
-  // const handleSaveAddress = () => {
-  //   console.log('Saving address:', newAddress);
-  //   const mockNewAddress = {
-  //     id: Date.now(),
-  //     ...newAddress,
-  //   };
-
-  //   setAddresses(prevAddresses => [...prevAddresses, mockNewAddress]);
-  //   setShowAddForm(false);
-
-  //   // Reset form
-  //   setNewAddress({
-  //     street: '',
-  //     city: '',
-  //     state: '',
-  //     zipCode: '',
-  //     country: 'India',
-  //     type: '',
-  //     label: '',
-  //     primary: false,
-  //   });
-  // };
-
-  const getAddressIcon = (type: any) => {
-    if (!type) return '📍';
-
-    switch (type.toLowerCase()) {
-      case 'home':
-        return '🏠';
-      case 'work':
-        return '🏢';
-      default:
-        return '📍';
-    }
-  };
-
-  const formatFullAddress = (address: any) => {
-    // Check if address has a formatted field already
-    if (address.address) return address.address;
-
-    // Otherwise build from components
-    const components = [];
-    if (address.street) components.push(address.street);
-    if (address.city) components.push(address.city);
-    if (address.state) components.push(address.state);
-    if (address.zipCode) components.push(address.zipCode);
-    if (address.country) components.push(address.country);
-
-    return components.join(', ');
-  };
-
-  const renderAddressItem = (item: any) => (
-    <View key={item.id} style={styles.addressItem}>
-      <View style={styles.iconContainer}>
-        <Text style={styles.addressIcon}>{getAddressIcon(item.type)}</Text>
-      </View>
-      <View style={styles.addressDetails}>
-        <Text style={styles.addressType}>{item.label || item.type}</Text>
-        <Text style={styles.addressText}>{formatFullAddress(item)}</Text>
-        {item.primary && <Text style={styles.primaryBadge}>Primary</Text>}
-      </View>
-    </View>
-  );
+  // Error state
+  if (!currentUserId && !loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorIcon}>🔐</Text>
+          <Text style={styles.errorTitle}>Authentication Required</Text>
+          <Text style={styles.errorText}>
+            Please login to manage your addresses
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <>
-      <StatusBar
-        backgroundColor={Colors.orange}
-        barStyle="light-content"
-        translucent={false}
-      />
-
-      {/* Orange header area */}
+      <StatusBar backgroundColor={Colors.orange} barStyle="light-content" />
       <SafeAreaView style={styles.safeAreaTop} />
 
       <SafeAreaView style={styles.container}>
+        {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Your Addresses</Text>
+          <Text style={styles.headerTitle}>My Addresses</Text>
+          <Text style={styles.headerSubtitle}>
+            Manage your delivery locations
+          </Text>
         </View>
-        <ScrollView style={styles.scrollView}>
-          {/* Header */}
 
-          {/* Address List */}
-          <View style={styles.addressesContainer}>
+        <ScrollView
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}>
+          <View style={styles.content}>
+            {/* Loading State */}
             {loading ? (
-              <Text style={styles.loadingText}>Loading addresses...</Text>
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={Colors.orange} />
+                <Text style={styles.loadingText}>Loading addresses...</Text>
+              </View>
             ) : addresses.length > 0 ? (
-              addresses.map(renderAddressItem)
+              /* Address List */
+              addresses.map(address => (
+                <AddressCard
+                  key={address.id}
+                  address={address}
+                  isSelected={selectedAddressId === address.id}
+                  onSelect={selectAddress}
+                  onSetPrimary={setPrimaryAddress}
+                  onDelete={deleteAddress}
+                />
+              ))
             ) : (
-              <Text style={styles.noAddressText}>
-                No addresses found. Add your first address below.
-              </Text>
+              /* Empty State */
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyIcon}>🏠</Text>
+                <Text style={styles.emptyTitle}>No Addresses Yet</Text>
+                <Text style={styles.emptyText}>
+                  Add your first delivery address to get started
+                </Text>
+              </View>
             )}
           </View>
 
-          {/* Add Address Button */}
-          <TouchableOpacity
-            style={styles.addAddressButton}
-            onPress={() => setShowAddForm(true)}>
-            <Text style={styles.addButtonText}>
-              <Text style={styles.plusIcon}>+</Text> ADD ADDRESS
-            </Text>
-          </TouchableOpacity>
-
           {/* Add Address Form */}
-          {showAddForm && (
-            <View style={styles.addAddressForm}>
-              <Text style={styles.formSectionTitle}>Add Address</Text>
-
-              <TextInput
-                style={styles.input}
-                placeholder="Street"
-                value={newAddress.street}
-                onChangeText={text =>
-                  setNewAddress({...newAddress, street: text})
-                }
-              />
-
-              <View style={styles.formRow}>
-                <TextInput
-                  style={[styles.input, styles.halfInput]}
-                  placeholder="City"
-                  value={newAddress.city}
-                  onChangeText={text =>
-                    setNewAddress({...newAddress, city: text})
-                  }
-                />
-
-                <TextInput
-                  style={[styles.input, styles.halfInput]}
-                  placeholder="State"
-                  value={newAddress.state}
-                  onChangeText={text =>
-                    setNewAddress({...newAddress, state: text})
-                  }
-                />
-              </View>
-
-              <View style={styles.formRow}>
-                <TextInput
-                  style={[styles.input, styles.halfInput]}
-                  placeholder="Zip Code"
-                  keyboardType="numeric"
-                  value={newAddress.zipCode}
-                  onChangeText={text =>
-                    setNewAddress({...newAddress, zipCode: text})
-                  }
-                />
-
-                <TextInput
-                  style={[styles.input, styles.halfInput]}
-                  placeholder="Country"
-                  value={newAddress.country}
-                  onChangeText={text =>
-                    setNewAddress({...newAddress, country: text})
-                  }
-                />
-              </View>
-
-              <View style={styles.addressTypeContainer}>
-                <TouchableOpacity
-                  style={[
-                    styles.addressTypeButton,
-                    newAddress.type === 'Home' && styles.selectedAddressType,
-                  ]}
-                  onPress={() => handleAddressTypeSelect('Home')}>
-                  <Text style={styles.addressTypeText}>Home</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.addressTypeButton,
-                    newAddress.type === 'Work' && styles.selectedAddressType,
-                  ]}
-                  onPress={() => handleAddressTypeSelect('Work')}>
-                  <Text style={styles.addressTypeText}>Work</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.addressTypeButton,
-                    newAddress.type === 'Other' && styles.selectedAddressType,
-                  ]}
-                  onPress={() => handleAddressTypeSelect('Other')}>
-                  <Text style={styles.addressTypeText}>Other</Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.formRow}>
-                <View style={styles.checkboxContainer}>
-                  <TouchableOpacity
-                    style={[
-                      styles.checkbox,
-                      newAddress.primary && styles.checkboxChecked,
-                    ]}
-                    onPress={() =>
-                      setNewAddress({
-                        ...newAddress,
-                        primary: !newAddress.primary,
-                      })
-                    }>
-                    {newAddress.primary && (
-                      <Text style={styles.checkmark}>✓</Text>
-                    )}
-                  </TouchableOpacity>
-                  <Text style={styles.checkboxLabel}>
-                    Set as primary address
-                  </Text>
-                </View>
-              </View>
-
-              <TouchableOpacity
-                style={styles.saveButton}
-                // onPress={handleSaveAddress}
-              >
-                <Text style={styles.saveButton}>SAVE ADDRESS</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+          <AddAddressForm
+            visible={showAddForm}
+            onClose={toggleAddForm}
+            onSave={handleSaveAddress}
+            slideAnim={slideAnim}
+          />
         </ScrollView>
+
+        {/* Floating Add Button */}
+        {!showAddForm && !saving && (
+          <TouchableOpacity
+            style={styles.floatingButton}
+            onPress={toggleAddForm}
+            activeOpacity={0.8}>
+            <Text style={styles.floatingIcon}>+</Text>
+            <Text style={styles.floatingText}>Add New Address</Text>
+          </TouchableOpacity>
+        )}
       </SafeAreaView>
     </>
   );
@@ -293,165 +145,105 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#f8f9fa',
+  },
+  header: {
+    backgroundColor: Colors.orange,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    color: '#fff',
+    opacity: 0.9,
+    marginTop: 4,
   },
   scrollView: {
     flex: 1,
   },
-  header: {
-    backgroundColor: Colors.orange,
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-  },
-  headerTitle: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  addressesContainer: {
+  content: {
     padding: 20,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    paddingVertical: 60,
   },
   loadingText: {
     fontSize: 16,
     color: '#666',
-    textAlign: 'center',
-    padding: 20,
+    marginTop: 16,
   },
-  noAddressText: {
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyIcon: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+  },
+  emptyText: {
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
-    padding: 20,
   },
-  addressItem: {
-    flexDirection: 'row',
-    marginBottom: 20,
-    alignItems: 'flex-start',
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 15,
-    borderWidth: 1,
-    borderColor: '#eee',
-  },
-  iconContainer: {
-    marginRight: 15,
-  },
-  addressIcon: {
-    fontSize: 24,
-  },
-  addressDetails: {
-    flex: 1,
-  },
-  addressType: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  addressText: {
-    fontSize: 16,
-    color: '#666',
-  },
-  primaryBadge: {
-    color: Colors.orange,
-    fontWeight: 'bold',
-    marginTop: 5,
-    fontSize: 14,
-  },
-  addAddressButton: {
-    marginHorizontal: 20,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 18,
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-  addButtonText: {
-    color: Colors.orange,
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  plusIcon: {
-    fontSize: 20,
-    fontWeight: '300',
-  },
-  addAddressForm: {
-    padding: 20,
-  },
-  formSectionTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  input: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 15,
-    fontSize: 16,
-  },
-  formRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  halfInput: {
-    width: '48%',
-  },
-  addressTypeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginVertical: 15,
-  },
-  addressTypeButton: {
-    flex: 1,
-    paddingVertical: 16,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    alignItems: 'center',
-    marginHorizontal: 5,
-    backgroundColor: '#fff',
-  },
-  selectedAddressType: {
-    borderColor: Colors.orange,
-  },
-  addressTypeText: {
-    fontSize: 16,
-  },
-  saveButton: {
+  floatingButton: {
     backgroundColor: Colors.orange,
-    borderRadius: 8,
-    padding: 18,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  checkboxContainer: {
+    margin: 20,
+    borderRadius: 16,
+    paddingVertical: 18,
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 10,
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 4,
-    marginRight: 10,
     justifyContent: 'center',
-    alignItems: 'center',
+    shadowColor: Colors.orange,
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  checkboxChecked: {
-    backgroundColor: Colors.orange,
-    borderColor: Colors.orange,
+  floatingIcon: {
+    fontSize: 20,
+    color: '#fff',
+    fontWeight: 'bold',
+    marginRight: 8,
   },
-  checkmark: {
+  floatingText: {
+    fontSize: 16,
     color: '#fff',
     fontWeight: 'bold',
   },
-  checkboxLabel: {
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  errorIcon: {
+    fontSize: 64,
+    marginBottom: 20,
+  },
+  errorTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+  },
+  errorText: {
     fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
   },
 });
 

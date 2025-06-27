@@ -50,6 +50,7 @@ type RootStackParamList = {
       name: string;
       price: number;
       quantity: number;
+      // image: string | undefined;
     }[];
   };
 };
@@ -79,8 +80,6 @@ const RestaurantScreen = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [totalItems, setTotalItems] = useState<number>(0);
   const [totalAmount, setTotalAmount] = useState<number>(0);
-
-  console.log(cart, 'Cart========+++++++++');
 
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [selectedFoodDesc, setSelectedFoodDesc] = useState<string | null>(null);
@@ -150,7 +149,7 @@ const RestaurantScreen = () => {
     const existingItemIndex = cart.findIndex(
       cartItem => cartItem.id === item.id,
     );
-
+    console.log(item, 'item========+++++++++');
     if (existingItemIndex !== -1) {
       // Item exists in cart, update quantity
       const updatedCart = [...cart];
@@ -165,6 +164,7 @@ const RestaurantScreen = () => {
           name: item.name,
           price: item.price,
           quantity: 1,
+          // image: item.imageUrl,
         },
       ]);
     }

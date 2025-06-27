@@ -6,7 +6,7 @@ interface RestroCard {
   restaurantName: string;
   cuisine: string;
   rating: number;
-  deliveryTime: number;
+  deliveryTime: string;
   location: string;
 }
 const RestaurantCard = ({
